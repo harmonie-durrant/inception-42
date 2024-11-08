@@ -1,0 +1,64 @@
+
+services:
+  nginx:
+    container_name: nginx
+    build:
+      context: ./requirements/nginx
+      dockerfile: Dockerfile
+    volumes:
+      - WordPress:/var/www/html
+    networks:
+      - docker-network
+    ports:
+      - "443:443"
+    restart: on-failure
+
+  mariadb: 
+    container_name: mariadb
+    build:
+      context: ./requirements/mariadb
+      dockerfile: Dockerfile
+    env_file:
+      - .env
+    depends_on:
+      - nginx
+    volumes:
+      - DB:/var/lib/mysql
+    networks:
+      - docker-network
+    restart: on-failure
+
+  wordpress:
+    container_name: wordpress
+    build:
+      context: ./requirements/wordpress
+      dockerfile: Dockerfile
+    env_file:
+      - .env
+    depends_on:
+      - mariadb
+      - nginx
+    volumes:
+      - WordPress:/var/www/html
+    networks:
+      - docker-network
+    restart: on-failure
+
+
+volumes:
+  WordPress:
+    driver: local
+    driver_opts:
+      type: none
+      device: /home/harmonie/data/wordpress
+      o: bind
+  DB:
+    driver: local
+    driver_opts:
+      type: none
+      device: /home/harmonie/data/mysql
+      o: bind
+
+networks:
+  docker-network:
+    driver: bridge
